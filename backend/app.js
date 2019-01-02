@@ -1,38 +1,56 @@
-const express = require('express');
-const bodyParser = require('body-parser')
+const express = require("express");
+const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
+
+const Post = require("./models/post");
 const app = express();
-app.use(bodyParser.json())
+
+mongoose
+  .connect(
+    "mongodb+srv://akash:fYUmQlFeMy52PgpB@cluster0-zuph0.mongodb.net/node-angular?retryWrites=true"
+  )
+  .then(() => {
+    console.log("Connected to DB")
+  })
+  .catch(() => {
+    console.log("Connection Failed")
+  });
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false}));
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin","*");
-  res.setHeader("Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept");
+  res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   res.setHeader("Access-Control-Allow-Methods","GET, POST, PATCH, DELETE, OPTIONS");
   next();
 });
 
-app.post('/api/posts' ,(req, res, next) => {
-  const post = req.body;
-  console.log();
-  res.status(201).json({
-    message: 'Post Added Successfully'
-  })
+app.post("/api/posts" ,(req, res, next) => {
+  const post = new Post({
+    title: req.body.title,
+    content: req.body.content
+  });
+  post.save().then(result => {
+    res.status(201).json({
+      message: 'Post Added Successfully',
+      postId: createdPost._id
+    });
+  });
 });
 app.get('/api/posts',(req, res, next) => {
-  const posts = [
-    {
-      id: '1',
-      title: 'First server side post',
-      content: 'Me GUsta'
-    },
-    {
-      id: '2',
-      title: 'First1 server side post',
-      content: 'Me GUsta2'
-    }
-  ];
-  res.status(200).json({
-    message: 'Posts fetched successfully',
-    posts: posts
+  Post.find()
+    .then(documents => {
+      res.status(200).json({
+        message: 'Posts fetched successfully',
+        posts: documents
+      });
+    });
+});
+app.delete("/api/posts/:id", (req, res, next) => {
+  Post.deleteOne({ _id: req.params.id }).then(result => {
+    console.log(result);
+    res.status(200).json({ message: "Post deleted!" });
   });
 });
 
